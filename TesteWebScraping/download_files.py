@@ -1,11 +1,36 @@
 import requests 
+from bs4 import BeautifulSoup
 
-list_of_url = [
-                'https://www.gov.br/ans/pt-br/arquivos/assuntos/consumidor/o-que-seu-plano-deve-cobrir/Anexo_I_Rol_2021RN_465.2021_RN473_RN478_RN480_RN513_RN536_RN537_RN538_RN539_RN541_RN542_RN544_546.pdf', 
-                'https://www.gov.br/ans/pt-br/arquivos/assuntos/consumidor/o-que-seu-plano-deve-cobrir/Anexo_II_DUT_2021_RN_465.2021_tea.br_RN473_RN477_RN478_RN480_RN513_RN536_RN537_RN538_RN539_RN540_RN541_RN542_RN544_546.pdf', 
-                'https://www.gov.br/ans/pt-br/arquivos/assuntos/consumidor/o-que-seu-plano-deve-cobrir/Anexo_III_DC_2021_RN_465.2021.v2.pdf', 
-                'https://www.gov.br/ans/pt-br/arquivos/assuntos/consumidor/o-que-seu-plano-deve-cobrir/Anexo_IV_PROUT_2021_RN_465.2021.v2.pdf'
-              ]
+LINK_URL = 'https://www.gov.br/ans/pt-br/assuntos/consumidor/o-que-o-seu-plano-de-saude-deve-cobrir-1/o-que-e-o-rol-de-procedimentos-e-evento-em-saude'
+
+def fetchWebPage(url):
+    try:
+        response = requests.get(url)
+        if response.status_code == requests.codes.OK:
+            return response.text
+        else:
+            print('[!] REQUEST ERROR')
+    except Exception as error:
+        print('[!] REQUEST ERROR')
+        print(error)
+
+def parsingTextFromWeb(response_web_page):
+    try:
+        soup = BeautifulSoup(response_web_page, 'html.parser')
+        return soup
+    except Exception as error:
+        print('[!] Parsing HTML Error')
+        print(error)
+
+def extractLinks():
+    site_text = fetchWebPage(LINK_URL)
+    if site_text:
+        soup = parsingTextFromWeb(site_text)
+        links = soup.findAll('a', attrs={'class': 'internal-link'})
+        right_links = [links[1]['href'], links[3]['href'], links[4]['href'], links[5]['href']]
+        return right_links
+    else:
+        print('[!] No content')
 
 def downloadFile(url, endereco):
     response = requests.get(url)
@@ -21,4 +46,7 @@ def downloadAllFiles(list_of_url):
         name = f'Anexo {index+1}.pdf'
         downloadFile(list_of_url[index], name)
 
+#fetchWebPage(LINK_URL)
+#downloadFile(list_of_url[0], 'teste.pdf')
+list_of_url = extractLinks()
 downloadAllFiles(list_of_url)
